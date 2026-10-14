@@ -1,0 +1,5 @@
+{
+  "gross_margin": 0.4,
+  "usd_rates": {"USD": 1, "CNY": 0.14},
+  "rate_note": "Demonstration rates, replace with approved business rates before real use"
+}

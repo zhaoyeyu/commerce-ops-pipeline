@@ -1,0 +1,5 @@
+货号,商品名称,商品描述,品牌,分类,成本,币种,库存,图片地址
+CASE-001,Protective phone case,Lightweight protective case,Example,Accessories,18,CNY,120,https://example.com/case.jpg
+CABLE-002,USB cable,One meter cable,Example,Accessories,2.5,USD,80,https://example.com/cable.jpg
+CASE-001,Duplicate sample,Repeated SKU,Example,Accessories,18,CNY,120,https://example.com/case.jpg
+BAD-003,Invalid sample,Missing cost,Example,Accessories,,USD,-1,http://example.com/item.jpg
