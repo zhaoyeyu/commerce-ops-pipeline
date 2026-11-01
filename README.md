@@ -1,4 +1,4 @@
-# Commerce Ops Pipeline
+# 电商业务自动化工作台
 
 商品资料、订单、库存、系统回执、结算与客服工单的可追踪业务工作流。支持CLI与JSON API，可供Python脚本、RPA流程和业务系统适配层调用。
 
