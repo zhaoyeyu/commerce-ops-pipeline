@@ -1,0 +1,12 @@
+{
+  "classification": {
+    "intent": "CANCEL_REQUEST",
+    "external_order_id": "ORDER-1001",
+    "summary": "客户希望在订单尚未发货的情况下取消订单，并请客服核实后回复。",
+    "next_action": "OPERATOR_REVIEW",
+    "reply_draft": "收到您的取消请求，我们会先核实订单状态和取消条件，确认后再回复您。"
+  },
+  "model": "gpt-6-luna",
+  "tool_events": [],
+  "side_effects": 0
+}

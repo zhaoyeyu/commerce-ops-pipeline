@@ -1,0 +1,4 @@
+[
+  {"store":"demo-store","external_id":"ORDER-1001","currency":"USD","lines":[{"sku":"SKU-001","qty":2,"unit_price":"4.20"}]},
+  {"store":"demo-store","external_id":"ORDER-1002","currency":"USD","lines":[{"sku":"SKU-MISSING","qty":1,"unit_price":"9.90"}]}
+]

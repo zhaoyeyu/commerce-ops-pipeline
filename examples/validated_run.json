@@ -1,0 +1,25 @@
+{
+  "dataset": "synthetic",
+  "operator_transport": "real loopback HTTP",
+  "adapter_transport": "real loopback HTTP",
+  "scenarios": {
+    "http_order_reserved": true,
+    "duplicate_http_order_idempotent": true,
+    "pending_remote_result_retains_stock": true,
+    "restart_and_receipt_reconcile": true,
+    "single_remote_side_effect": true,
+    "stock_snapshot_replay_does_not_restock": true,
+    "settlement_matched": true,
+    "settlement_exception_visible": true,
+    "500_orders_20_workers_no_oversell": true,
+    "stock_invariants": true
+  },
+  "passed": true,
+  "orders": 501,
+  "audit_events": 1010,
+  "concurrency_workers": 20,
+  "load_orders": 500,
+  "remote_posts": 1,
+  "remote_side_effects": 1,
+  "seconds": 5.207
+}

@@ -1,33 +1,70 @@
-# Commerce Ops Pipeline · 跨境商品运营工作流
+# Commerce Ops Pipeline
 
-把供应商商品表转换为标准商品目录、Shopify 草稿导入 CSV、异常清单和可追踪的处理记录。适用于商品资料整理、导入准备和重复批次处理。
+商品资料、订单、库存、系统回执、结算与客服工单的可追踪业务工作流。支持CLI与JSON API，可供Python脚本、RPA流程和业务系统适配层调用。
 
-## 运行
+## 业务能力
 
-Python 3.10+，不需要外部依赖。
+- **商品资料**：供应商中英文表头映射、字段校验、币种与毛利率计算、商品目录及Shopify草稿CSV准备、异常清单和批次去重。
+- **订单与库存**：多店铺订单标识、重复输入与冲突识别、共享仓库库存预留、整单原子校验、缺货修复重跑、取消释放。
+- **系统集成**：持久化履约任务、唯一请求标识、HTTP适配器、独立回执查询、进程中断恢复；区分明确拒绝与结果未知。
+- **结算核对**：订单金额、币种、平台费用及实收对比，按结算参考号去重，输出差异。
+- **AI工单辅助**：通过已有Codex登录调用指定模型，提取意图和订单号，生成待确认回复；结合对应店铺的订单状态建立处理工单。
+- **运营交接**：CSV报表、异常清单、审计事件、处理记录与可复现验收。
+
+## 快速运行
+
+Python 3.11+，业务引擎和HTTP服务均使用标准库。AI功能另需已登录的Codex CLI及可用模型。
+
+```shell
+python -m unittest -v
+python acceptance.py --output output/my-first-run
+```
+
+验收使用合成业务数据，并实际启动操作API与履约适配器两个HTTP服务。运行结束导出订单、库存、结算和异常报表，随后关闭服务。
+
+[已验证运行结果](examples/validated_run.json)：501笔订单，其中500单由20个并发线程提交；覆盖库存约束、重复提交、对端已完成但回执暂未确认、重启查询和结算差异。数据规模及耗时仅代表该次验证运行。
+
+## 处理自己的业务输入
+
+```shell
+python -m commerce_ops stock SKU-001 10 --snapshot-id supplier-stock-001
+python -m commerce_ops import-orders examples/orders.json
+python -m commerce_ops report
+python -m commerce_ops queue <order-id>
+python -m commerce_ops dispatch <task-id> --connector https://your-adapter.example
+python -m commerce_ops reconcile <task-id> --connector https://your-adapter.example
+python -m commerce_ops export output/business-report
+```
+
+默认数据库为`data/operations.sqlite`。不同批次通过稳定订单号与库存快照号去重，不能用新的请求号重放同一业务动作。金额使用十进制输入和整数最小货币单位存储。
+
+原商品导入仍可独立使用：
 
 ```shell
 python pipeline.py examples/supplier.csv
-python -m unittest -v
+python -m commerce_ops import-catalog examples/supplier.csv --stock-snapshot-id approved-stock-001
 ```
 
-第一次示例：4 条输入，2 条可导入、2 条异常。相同输入再次处理：2 条未变化、不重复导出。调整汇率或毛利率后重新计算并导出变化商品。
+库存同步由明确的物理库存快照触发。只改售价配置时不应创建新的库存快照号。
 
-## 业务链路
+## AI客服工单
 
-1. 供应商中英文表头映射到统一 SKU、类目、成本、库存与图片字段。
-2. 校验必填值、成本/币种、库存、图片协议、重复 SKU 与导入标识冲突。
-3. 按配置汇率和目标毛利率计算 USD 售价，使用 Decimal 保留两位小数。
-4. 导出标准目录与 Shopify 草稿 CSV；异常进入单独清单，可修正后再次处理。
-5. SQLite 保存 SKU 状态和批次行级事件；配置参与批次指纹，变化更新、未变化跳过。
-6. 输出 manifest 汇总输入、可导入、异常和跳过数量。
+```shell
+python -m commerce_ops.ai_assist examples/customer_ticket.txt --model YOUR_AVAILABLE_MODEL --output output/ticket.json --db data/operations.sqlite --store demo-store --case-id ticket-001
+```
 
-所有示例都是合成商品；汇率仅作演示。导出是导入准备，不代表已经在平台上架。真实店铺接入需要按平台当前模板核验字段，并导入草稿检查后发布。库存、价格和币种需要业务确认；当前不连接店铺、不操作资金。
+分类调用在临时工作目录中运行，关闭Shell、统一命令执行和继承的MCP服务；结果经JSON字段校验后写入工单。取消请求进入人工处理队列，订单状态由业务操作接口维护。
 
-## 交付与运营
+[实际分类结果](examples/ai_ticket_result.json)记录了模型输出及零工具调用。可以更换模型，不需要把业务流程绑定到某个模型。
 
-可以演示需求拆解、字段设计、规则配置、批处理实现、异常修复、重复运行和结果追踪的完整过程。用商品运营业务语言说明输入、处理规则、输出和异常，比单列 Python/AI 工具更容易评估实际交付能力。
+## HTTP接入与运行维护
 
-下一步可接入平台 API、任务调度和发布结果回写；这些扩展未包含在当前版本中。
+设置`COMMERCE_OPS_TOKEN`后启动：
 
-字段参考：[Shopify 产品 CSV 文档](https://help.shopify.com/en/manual/products/import-export/using-csv)。多仓库存应使用平台库存模板，当前导出按单仓草稿场景设计。
+```shell
+python -m commerce_ops.api --port 8769
+```
+
+服务监听`127.0.0.1`，业务路由使用Bearer令牌。`COMMERCE_CONNECTOR_TOKEN`单独用于外部适配器。令牌通过环境变量传入，不进入示例文件。
+
+完整路由、状态转换、故障恢复和适配器约定见[运行说明](IMPLEMENTATION.md)。HTTP适配层已通过实际回环服务验证；具体商家平台需实现其认证、字段映射与回执协议。现有实现不包含商业平台认证或支付执行。
